@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard v7.3</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+ 
+<style>
+	/* CSS POČINJE OVDJE (linija 10) */
+        :root {
+		--bg-color: #f1f5f9;
+		--card-bg: #ffffff;
+		--text-color: #1e293b;
+		--primary-blue: #1e3a8a;
+		--link-color: #2563eb;
+		--danger: #ef4444;
+		--c-blue: #2563eb; 
+		--c-green: #22c55e; 
+		--c-orange: #f59e0b; 
+		--c-red: #ef4444; 
+		--c-purple: #a855f7;
+		--primary-blue-rgb: 30, 58, 138;
+		--link-color-rgb: 37, 99, 235;
+		--danger-rgb: 239, 68, 68;
+		--breakpoint-sm: 600px;
+		--breakpoint-md: 900px;
+		--breakpoint-lg: 1400px;
+		}
+
+        [data-theme="dark"] {
+		--bg-color: #0f172a;
+		--card-bg: #1e293b;
+		--text-color: #f1f5f9;
+		--primary-blue: #38bdf8;
+		--link-color: #7dd3fc;
+		--primary-blue-rgb: 56, 189, 248; 
+		--link-color-rgb: 125, 211, 252;
+		}
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0; padding: 0;
+            transition: all 0.2s ease;
+        }
+
+        header {
+            padding: 15px 25px; background: var(--card-bg);
+            border-bottom: 2px solid var(--primary-blue);
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+        }
+
+        .search-box input {
+            padding: 8px 15px; width: 250px; border-radius: 20px;
+            border: 1px solid #ddd; outline: none; background: var(--bg-color); color: var(--text-color);
+        }
+
+        .info-panel { display: flex; align-items: center; gap: 15px; }
+
+        /* Stilovi za linkove u zaglavlju (Sat i Vrijeme) */
+        .header-link {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            transition: opacity 0.2s;
+        }
+        .header-link:hover { opacity: 0.7; }
+
+        .time-date-group {
+            text-align: right; border-right: 1px solid rgba(0,0,0,0.1); padding-right: 15px;
+        }
+        [data-theme="dark"] .time-date-group { border-right-color: rgba(255,255,255,0.1); }
+
+       .weather-panel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    background: rgba(0,0,0,0.05);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;  /* ← BITNO: pokazivač */
+    transition: all 0.3s ease;
+}
+
+.weather-panel:hover {
+    background: rgba(var(--primary-blue-rgb), 0.1);
+    transform: translateY(-2px);
+}
+
+.weather-details {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    display: none;
+    min-width: 280px;
+}
+
+.weather-details.show {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Dodajte chevron animaciju */
+.weather-panel .fa-chevron-down {
+    transition: transform 0.3s ease;
+}
+
+.weather-container:hover .fa-chevron-down {
+    transform: rotate(180deg);
+}
+        /* Animacija za ikonu teme */
+        .theme-toggle {
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+        .theme-toggle:hover {
+            transform: rotate(15deg);
+        }
+        .theme-toggle { background: transparent; border: 0; color: inherit; padding: 6px; border-radius: 8px; }
+        .theme-toggle:focus-visible, .admin-trigger:focus-visible, .delete-btn:focus-visible { outline: 3px solid rgba(var(--primary-blue-rgb), .35); outline-offset: 2px; }
+
+
+       /* --- Layout & Wrapper --- */
+        .main-wrapper { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 20px; 
+            padding: 20px; 
+            justify-content: flex-start; 
+        }
+		
+		/*TESTIRATI Umjesto flex-wrap sa fixed %, razmislite o: 
+		.main-wrapper {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+		}*/
+
+        /* --- Columns (Postavljeno na 20% za 5 kolona) --- */
+        .column { 
+            flex: 0 0 calc(20% - 16px); /* Prilagođeno za 5 kolona u redu */
+            min-width: 250px; 
+            background: rgba(0,0,0,0.03); 
+            border-radius: 12px; 
+            padding: 12px; 
+            box-sizing: border-box; 
+            transition: transform 0.2s; 
+        }
+
+        [data-theme="dark"] .column { background: rgba(255,255,255,0.03); }
+
+        .col-header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            margin-bottom: 12px; 
+            border-bottom: 2px solid var(--primary-blue); 
+            padding-bottom: 6px; 
+            cursor: move; 
+        }
+
+        .col-title { 
+            border: none; 
+            background: transparent; 
+            color: var(--primary-blue); 
+            font-weight: 800; 
+            font-size: 0.85rem; 
+            text-transform: uppercase; 
+            width: 75%; 
+            outline: none; 
+        }
+
+        /* --- List & Scrollbar --- */
+        .list-container { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            max-height: 500px; 
+            overflow-y: auto; 
+            padding-right: 6px; 
+        }
+
+        .list-container::-webkit-scrollbar { width: 5px; }
+        .list-container::-webkit-scrollbar-thumb { 
+    background: var(--scrollbar-color, #cbd5e1); 
+}
+		
+		[data-theme="dark"] .list-container::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
+        /* --- Cards --- */
+        .card-wrapper {
+			position: relative;
+			cursor: grab;
+			transition: 
+				transform 0.2s ease, 
+				opacity 0.2s ease;
+		}
+		
+		/* 1. Enhanced card hover */
+		.card-wrapper:hover .card {
+			background: linear-gradient(
+				135deg,
+				var(--card-bg) 0%,
+				rgba(var(--primary-blue-rgb), 0.03) 100%
+			);
+			border-color: rgba(var(--primary-blue-rgb), 0.2);
+		}
+		.card-wrapper:hover {
+    will-change: transform;
+}
+
+.card-wrapper {
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+		
+		
+	   .card-wrapper.dragging { opacity: 0.2; }
+                
+        .card { 
+            background-color: var(--card-bg); 
+            border: 1px solid rgba(0,0,0,0.08); 
+            border-radius: 8px; 
+            padding: 12px; 
+            pointer-events: none; 
+            position: relative; 
+            overflow: hidden; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: box-shadow 0.2s;
+        }
+        .card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .card::before { 
+            content: ""; 
+            position: absolute; 
+            left: 0; top: 0; bottom: 0; 
+            width: 5px; 
+            background: var(--card-color, var(--primary-blue)); 
+        }
+        .card h3 { 
+            margin: 0; 
+            color: var(--primary-blue); 
+            font-size: 0.85rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+        .favicon { width: 18px; height: 18px; border-radius: 4px; background: white; object-fit: contain; }
+        .card p { 
+            font-size: 0.7rem; 
+            opacity: 0.8; 
+            margin: 6px 0 4px 28px; 
+            line-height: 1.2;
+        }
+        .url { 
+            font-size: 0.6rem; 
+            font-weight: bold; 
+            color: var(--link-color); 
+            margin-left: 28px; 
+            opacity: 0.5; 
+        }
+        /* --- Controls & Buttons --- */
+        .delete-btn { 
+            position: absolute; 
+            top: 6px; right: 6px; 
+            background: var(--danger); 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            width: 20px; height: 20px; 
+            font-size: 10px; 
+            cursor: pointer; 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 10; 
+            pointer-events: auto; 
+        }
+
+        .card-wrapper:hover .delete-btn { display: flex; }
+
+        .add-col-trigger { 
+            flex: 0 0 calc(20% - 16px); 
+            min-width: 250px; 
+            background: rgba(0,0,0,0.05); 
+            border: 2px dashed #cbd5e1; 
+            border-radius: 12px; 
+            height: 60px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            font-weight: bold; 
+            color: #64748b; 
+            font-size: 0.85rem; 
+            gap: 10px; 
+        }
+		
+		
+		.add-col-trigger:hover {
+    border-color: var(--primary-blue);
+    background: rgba(var(--primary-blue-rgb), 0.05);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+
+        /* --- Admin & Settings --- */
+        .admin-trigger { 
+            position: fixed; 
+            bottom: 25px; right: 25px; 
+            background: var(--primary-blue); 
+            color: white; 
+            width: 50px; height: 50px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            z-index: 1001; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
+        }
+
+        .settings-card { 
+            position: fixed; 
+            bottom: 85px; right: 25px; 
+            background: var(--card-bg); 
+            color: var(--text-color);
+            padding: 20px; 
+            border-radius: 15px; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4); 
+            z-index: 1000; 
+            width: 300px; 
+            display: none; 
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .settings-card.active { display: block; }
+        .settings-card input, .settings-card select { 
+            width: 100%; 
+            margin-bottom: 10px; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .io-btns { display: flex; gap: 8px; margin-bottom: 12px; }
+        .io-btns button { 
+            flex: 1; 
+            padding: 10px; 
+            font-size: 0.75rem; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            border: 1px solid #cbd5e1; 
+            background: var(--card-bg); 
+            color: var(--text-color);
+        }
+
+        /* --- Notifikacija --- */
+        .theme-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary-blue);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            z-index: 9999;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: fadeInOut 2s ease forwards;
+            font-weight: 600;
+            max-width: 250px;
+        }
+
+       
+	   	/* ===== KEYFRAMES KOLEKCIJA ===== */
+		/* Svi @keyframes na jednom mjestu za lakše održavanje */
+		
+		/* 1. Fade in/out notifikacija */
+		@keyframes fadeInOut {0% {opacity: 0; transform: translateY(-10px) translateX(20px);}15% {opacity: 1; transform: translateY(0) translateX(0); }85% { opacity: 1; transform: translateY(0) translateX(0); }100% { opacity: 0; transform: translateY(-10px) translateX(20px); }}
+		
+		/* 2. Slide animacije za notifikacije */
+		@keyframes slideIn {from {transform: translateX(100px);opacity: 0;}to {transform: translateX(0);opacity: 1;}}
+		@keyframes slideOut {from {transform: translateX(0);opacity: 1;}to {transform: translateX(100px);opacity: 0;}}
+		
+		/* 3. Slide up za CTRL indikator */
+		@keyframes slideUp {from {transform: translateY(10px);opacity: 0;}to {transform: translateY(0);opacity: 1;}}
+		
+		/* 4. Bounce efekt za theme toggle */
+		@keyframes bounce {0%, 100% { transform: scale(1); }50% { transform: scale(1.2); }}
+		
+		/* 5. Heart animacije za footer */
+		@keyframes heartbeat {0%, 100% { transform: scale(1); }50% { transform: scale(1.5); }}
+		@keyframes gentleBeat {0%, 100% { transform: scale(1); }50% { transform: scale(1.1); }}
+		
+		/* 6. Dodatne animacije koje možete koristiti u budućnosti */
+		@keyframes pulse {0%, 100% { opacity: 1; }50% { opacity: 0.7; }}
+		@keyframes shake {0%, 100% { transform: translateX(0); }25% { transform: translateX(-5px); }75% { transform: translateX(5px); }}
+		
+		
+		/* --- Responsive --- */
+        @media (max-width: 1400px) { 
+            .column, .add-col-trigger { flex: 0 0 calc(33.33% - 15px); } 
+        }
+        
+        @media (max-width: 900px) { 
+            .column, .add-col-trigger { flex: 0 0 calc(50% - 15px); } 
+        }
+        
+        @media (max-width: 768px) {
+            
+	    .card-wrapper, button, .add-col-trigger {
+        min-height: 44px; /* Apple Human Interface Guidelines */
+    }
+}           
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+            .card h3 {
+                font-size: 0.9rem;
+            }
+            
+            /* Hamburger menu za postavke na mobilnim */
+            .admin-trigger {
+                width: 60px;
+                height: 60px;
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+        
+        @media (max-width: 600px) { 
+            .column, .add-col-trigger { flex: 0 0 100%; }
+            
+            .settings-card {
+                width: calc(100% - 40px);
+                right: 20px;
+                left: 20px;
+                bottom: 90px; /* Da ne preklapa admin trigger */
+            }
+            
+            /* Poboljšanja za vrlo male ekrane */
+            .card-wrapper {
+                min-height: 70px;
+            }
+            
+            .card h3 {
+                font-size: 0.85rem;
+            }
+            
+            .card p {
+                font-size: 0.65rem;
+            }
+            
+            .url {
+                font-size: 0.55rem;
+            }
+            
+            .search-box input {
+                width: 200px;
+            }
+            
+            .info-panel {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .time-date-group {
+                border-right: none;
+                padding-right: 0;
+                text-align: center;
+            }
+        }
+        
+        /* Ekstremno mali uređaji (iPhone SE, stariji telefoni) */
+        @media (max-width: 375px) {
+            .search-box input {
+                width: 180px;
+            }
+            
+            .card-wrapper {
+                min-height: 65px;
+            }
+            
+            .card h3 {
+                font-size: 0.8rem;
+            }
+            
+            .admin-trigger {
+                width: 50px;
+                height: 50px;
+                bottom: 15px;
+                right: 15px;
+            }
+            
+            .settings-card {
+                padding: 15px;
+                bottom: 75px;
+            }
+        }
+		
+		
+		/* Stilovi za kratice na tipkovnici */
+		.shortcuts-help {
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			background: var(--card-bg);
+			color: var(--text-color);
+			padding: 20px;
+			border-radius: 12px;
+			box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+			z-index: 2000;
+			border: 1px solid rgba(255,255,255,0.1);
+			min-width: 300px;
+			max-width: 400px;
+		}
+
+		.shortcuts-content h3 {
+			margin: 0 0 15px 0;
+			color: var(--primary-blue);
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.shortcut-item {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 8px 0;
+			border-bottom: 1px solid rgba(0,0,0,0.1);
+		}
+
+		[data-theme="dark"] .shortcut-item {
+			border-bottom-color: rgba(255,255,255,0.1);
+		}
+
+		.shortcut-item .key {
+			background: var(--primary-blue);
+			color: white;
+			padding: 4px 8px;
+			border-radius: 4px;
+			font-family: monospace;
+			font-size: 0.8rem;
+			font-weight: bold;
+		}
+
+		.shortcut-item .desc {
+			font-size: 0.85rem;
+			opacity: 0.9;
+			}
+
+		
+		
+
+		/* Indikator za fokus na kartici (opcionalno) */
+		.card-wrapper:focus {
+			outline: 2px solid var(--primary-blue);
+			outline-offset: 2px;
+		}
+
+		/* Indikator za tab navigaciju */
+		.card-wrapper:focus-visible {
+			outline: 2px solid var(--primary-blue);
+			outline-offset: 2px;
+		}
+		
+		
+		/* Dodaj ovaj CSS za CTRL indikator */
+		.ctrl-indicator {
+			position: fixed;
+			bottom: 25px;
+			left: 25px;
+			background: var(--primary-blue);
+			color: white;
+			padding: 8px 12px;
+			border-radius: 20px;
+			font-size: 0.8rem;
+			font-weight: bold;
+			display: none;
+			align-items: center;
+			gap: 8px;
+			z-index: 1002;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+		}
+
+		.ctrl-indicator.show {
+			display: flex;
+			animation: slideUp 0.2s ease;
+		}
+
+		
+
+		/* Stil za tijelo kada je CTRL aktivan */
+		body.ctrl-active .card-wrapper {
+			cursor: grab;
+		}
+
+		body.ctrl-active .card-wrapper:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+		}
+
+		body.ctrl-active .col-header {
+			cursor: grab;
+		}
+
+
+
+		/* ===== FOOTER STILOVI ===== */
+		.dashboard-footer {
+		background: var(--card-bg);
+    border-top: 2px solid #e5e7eb;
+    padding: 15px 25px;
+    margin-top: 30px;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    position: relative;
+    z-index: 100;
+    overflow: hidden; /* Ovo ide ovdje, ne zasebno */
+    display: flex;
+    justify-content: flex-end; /* Moderniji način od float */
+}
+
+[data-theme="dark"] .dashboard-footer {
+    border-top-color: #374151;
+    background: var(--card-bg);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);}
+
+		.footer-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: var(--text-color);
+    opacity: 0.8;
+    margin-left: auto; /* Gura sadržaj desno */
+}
+
+		.dashboard-footer {
+			overflow: hidden; /* Da obuhvati float element */
+		}
+
+		.footer-left, .footer-right {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.footer-separator {
+			opacity: 0.5;
+		}
+
+		/* Responsive footer */
+		@media (max-width: 768px) {
+			.dashboard-footer {
+				padding: 12px 20px;
+			}
+			
+			.footer-content {
+				justify-content: center; /* Na mobilnim centriraj */
+				gap: 10px;
+				text-align: center;
+			}
+			
+			.footer-left, .footer-right {
+				flex-direction: column;
+				gap: 5px;
+			}
+			
+			.footer-separator {
+				display: none;
+			}
+		}
+		.footer-link {
+			color: var(--primary-blue);
+			text-decoration: none;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			border-bottom: 1px dotted transparent;
+		}
+
+		.footer-link:hover {
+			opacity: 1;
+			border-bottom-color: var(--primary-blue);
+			text-decoration: none;
+		}
+
+		[data-theme="dark"] .footer-link {
+			color: var(--link-color);
+		}
+
+		[data-theme="dark"] .footer-link:hover {
+    border-bottom-color: var(--link-color);
+}
+		/* Animacija za hover efekte */
+		.footer-left span:not(.footer-separator):hover,
+		.footer-right span:hover {
+			opacity: 1;
+			cursor: default;
+			transition: opacity 0.2s ease;
+		}
+
+		/* Footer ikone */
+		.footer-right i {
+			margin: 0 4px;
+			transition: transform 0.3s ease;
+		}
+
+		.footer-right:hover i.fa-heart {
+			transform: scale(1.2);
+			animation: heartbeat 1s infinite;
+		}
+			
+		button:active {
+			transform: scale(0.98);
+			transition: transform 0.1s ease;
+		}
+
+		
+		.theme-toggle:hover i {animation: bounce 0.5s ease;}
+		.footer-right .fa-heart {animation: gentleBeat 2s infinite;}
+		
+    /* Weather Container i detalji */
+.weather-container {
+    position: relative;
+    display: inline-block;
+}
+
+.weather-panel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    background: rgba(0,0,0,0.05);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.weather-panel:hover {
+    background: rgba(var(--primary-blue-rgb), 0.1);
+    transform: translateY(-2px);
+}
+
+.weather-details {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    display: none;
+    min-width: 280px;
+}
+
+.weather-details.show {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.weather-details i {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+    color: var(--c-orange);
+}
+
+.weather-details div {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.weather-details small {
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive za weather detalje */
+@media (max-width: 768px) {
+    .weather-details {
+        position: fixed;
+        top: auto;
+        bottom: 80px;
+        right: 20px;
+        left: 20px;
+        width: auto;
+    }
+}
+
+.col-title:focus, 
+.settings-card input:focus,
+.settings-card select:focus {
+    outline: 2px solid var(--primary-blue);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(var(--primary-blue-rgb), 0.1);
+    transform: scale(1.01);
+    transition: all 0.2s ease;
+}
+
+button:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+}
+
+.theme-toggle:hover i {
+    animation: bounce 0.5s ease;
+}
+
+.footer-right .fa-heart {
+    animation: gentleBeat 2s infinite;
+}
+	
+	
+/* ===== DASHBOARD v7 ===== */
+.universal-search { position:relative; display:flex; align-items:center; min-width:min(440px, 92vw); }
+.universal-search input { width:100%; padding-left:38px !important; padding-right:38px !important; }
+.search-icon { position:absolute; left:14px; opacity:.55; pointer-events:none; }
+.clear-search-btn { position:absolute; right:7px; width:28px; height:28px; border:0; border-radius:50%; background:transparent; color:var(--text-color); cursor:pointer; opacity:.55; display:none; }
+.clear-search-btn:hover { background:rgba(var(--primary-blue-rgb),.10); opacity:1; }
+.dashboard-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 20px 0; }
+.toolbar-btn { border:1px solid rgba(var(--primary-blue-rgb),.25); background:var(--card-bg); color:var(--text-color); border-radius:999px; padding:8px 13px; display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; }
+.toolbar-btn.active { background:var(--primary-blue); color:white; border-color:var(--primary-blue); }
+.toolbar-status { font-size:.78rem; opacity:.7; }
+.quick-section { margin:14px 20px 0; padding:12px; border-radius:12px; background:rgba(var(--primary-blue-rgb),.045); border:1px solid rgba(var(--primary-blue-rgb),.08); }
+.quick-section.is-empty { display:none; }
+.quick-heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; color:var(--primary-blue); font-weight:800; font-size:.82rem; text-transform:uppercase; letter-spacing:.03em; }
+.quick-heading small { opacity:.65; }
+.quick-cards { display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; }
+.quick-card { flex:0 0 auto; min-width:150px; max-width:220px; background:var(--card-bg); border:1px solid rgba(0,0,0,.08); border-radius:9px; padding:9px 11px; cursor:pointer; display:flex; align-items:center; gap:9px; box-shadow:0 2px 5px rgba(0,0,0,.04); }
+.quick-card:hover { transform:translateY(-1px); border-color:rgba(var(--primary-blue-rgb),.25); }
+.quick-card img { width:18px; height:18px; object-fit:contain; }
+.quick-card-text { min-width:0; }
+.quick-card-name { font-weight:750; font-size:.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.quick-card-desc { font-size:.64rem; opacity:.6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.link-button { border:0; background:transparent; color:var(--link-color); cursor:pointer; font-size:.72rem; font-weight:700; }
+.col-header .collapse-btn, .card-actions button { pointer-events:auto; }
+.collapse-btn { width:26px; height:26px; border:0; border-radius:6px; background:transparent; color:var(--text-color); cursor:pointer; }
+.column.collapsed .list-container { display:none; }
+.column.collapsed .collapse-btn i { transform:rotate(-90deg); }
+.collapse-btn i { transition:transform .2s ease; }
+.card-actions { position:absolute; top:6px; right:6px; display:none; gap:4px; z-index:12; }
+body.edit-mode .card-actions { display:flex; }
+body.edit-mode .delete-btn { display:none !important; }
+.card-actions button { width:24px; height:24px; border:0; border-radius:5px; cursor:pointer; background:rgba(var(--primary-blue-rgb),.10); color:var(--primary-blue); }
+.card-actions button.favorite-active { color:#f59e0b; background:rgba(245,158,11,.13); }
+.card-actions .danger-mini { color:var(--danger); background:rgba(239,68,68,.10); }
+body:not(.edit-mode) .col-title { pointer-events:none; }
+body:not(.edit-mode) .col-header { cursor:default; }
+body:not(.edit-mode) .add-col-trigger { display:none; }
+body:not(.edit-mode) .column { cursor:default !important; }
+body:not(.edit-mode) .card-wrapper { cursor:pointer !important; }
+.modal-backdrop { position:fixed; inset:0; z-index:3000; background:rgba(15,23,42,.5); display:none; align-items:center; justify-content:center; padding:20px; }
+.modal-backdrop.show { display:flex; }
+.edit-modal { width:min(480px, 100%); background:var(--card-bg); color:var(--text-color); border-radius:16px; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.35); }
+.edit-modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.edit-modal-header h3 { margin:0; color:var(--primary-blue); }
+.edit-modal label { display:block; font-size:.72rem; font-weight:800; margin:10px 0; }
+.edit-modal input,.edit-modal select { width:100%; box-sizing:border-box; margin-top:5px; padding:10px; border:1px solid #cbd5e1; border-radius:7px; background:var(--bg-color); color:var(--text-color); }
+.edit-modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
+.icon-btn,.secondary-btn,.primary-btn { border:0; border-radius:7px; padding:9px 12px; cursor:pointer; }
+.icon-btn { background:transparent; color:var(--text-color); padding:7px 9px; }
+.secondary-btn { background:rgba(100,116,139,.12); color:var(--text-color); }
+.primary-btn { background:var(--primary-blue); color:white; font-weight:800; }
+.search-hidden { display:none !important; }
+@media (max-width:700px){ .dashboard-toolbar{align-items:flex-start;flex-direction:column}.quick-section{margin-left:12px;margin-right:12px}.universal-search{min-width:100%}.search-box{width:100%} }
+
+</style>
+</head>
+
+<body data-theme="light">
+
+<header>
+    <div class="search-box universal-search">
+        <i class="fas fa-magnifying-glass search-icon"></i>
+        <input type="text" id="dashboardSearch" autocomplete="off" placeholder="Pretraži Dashboard">
+        <button type="button" id="clearSearchBtn" class="clear-search-btn" title="Očisti pretragu" aria-label="Očisti pretragu"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div class="info-panel">
+        <button type="button" class="theme-toggle" onclick="toggleTheme()" id="themeToggle" aria-label="Promijeni temu">
+            <i class="fas fa-circle-half-stroke"></i>
+        </button>
+        
+        <a href="https://calendar.google.com" target="_blank" class="header-link">
+            <div class="time-date-group">
+                <div id="date" style="font-size: 0.7rem; opacity: 0.8;"></div>
+                <div id="clock" style="font-size: 1.1rem; font-weight: bold; color: var(--primary-blue);"></div>
+            </div>
+        </a>
+
+        <!-- NOVI WEATHER CONTAINER (zamjenjuje stari) -->
+				<div class="weather-container">
+			<div class="weather-panel" id="weatherPanel">
+				<i class="fa-solid fa-spinner fa-spin"></i>
+				<span id="temp">...</span>
+				<i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; opacity: 0.7;"></i>
+			</div>
+			<div class="weather-details" id="weatherDetails">
+				<div style="text-align: center; padding: 10px;">
+					<i class="fa-solid fa-spinner fa-spin"></i> Učitavanje...
+				</div>
+			</div>
+		</div>
+    </div>
+</header>
+
+    <section class="dashboard-toolbar" id="dashboardToolbar" style="display:none;"></section>
+
+    <section class="quick-section" id="favoritesSection">
+        <div class="quick-heading"><span><i class="fas fa-star"></i> Favoriti</span><small id="favoritesCount"></small></div>
+        <div class="quick-cards" id="favoritesList"></div>
+    </section>
+
+<div class="main-wrapper" id="mainWrapper" ondragover="handleColDragOver(event)"></div>
+
+	
+	<div class="ctrl-indicator" id="ctrlIndicator">
+		<i class="fas fa-hand-pointer"></i>
+		<span>Držite CTRL za povlačenje</span>
+	</div>
+
+    <button type="button" class="admin-trigger" onclick="toggleSettings()" aria-label="Otvori postavke"><i class="fas fa-cog"></i></button>
+    
+    <div class="settings-card" id="settingsCard">
+        <h4 style="margin:0 0 10px 0;">Postavke Dashboarda</h4>
+        <button id="editModeBtn" class="toolbar-btn" type="button" onclick="toggleEditMode()" style="width:100%; justify-content:center; margin-bottom:12px;"><i class="fas fa-lock"></i><span>Uređivanje zaključano</span></button>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 2px 12px; font-size:.78rem;">
+            <span style="opacity:.7;"><i class="fas fa-link" style="margin-right:6px;"></i>Broj linkova</span>
+            <strong id="searchResultCount">0</strong>
+        </div>
+        <hr style="margin: 0 0 15px 0; opacity: 0.2;">
+        <input type="text" id="newName" placeholder="Ime linka">
+        <input type="text" id="newDesc" placeholder="Opis">
+        <input type="text" id="newUrl" placeholder="https://...">
+        
+        <label style="font-size: 0.7rem; font-weight: bold;">Kategorija:</label>
+        <select id="newColSelect"></select>
+
+        <button onclick="addNewLink()" style="width:100%; background:var(--primary-blue); color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:bold; margin-top: 10px;">DODAJ LINK</button>
+        <hr style="margin: 15px 0; opacity: 0.2;">
+        <div class="io-btns">
+            <button onclick="exportSettings()"><i class="fas fa-download"></i> EXPORT</button>
+            <button onclick="document.getElementById('importInput').click()"><i class="fas fa-upload"></i> IMPORT</button>
+        </div>
+        <input type="file" id="importInput" style="display:none" accept=".json" onchange="importSettings(event)">
+        <button onclick="clearMemory()" style="width:100%; background:#fee2e2; color:#991b1b; border:1px solid #f87171; padding:5px; font-size:0.75rem; cursor:pointer; border-radius: 5px;">Vrati na tvorničke postavke</button>
+	</div>
+	
+    <div class="modal-backdrop" id="editModalBackdrop" onclick="if(event.target===this) closeEditModal()">
+        <div class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+            <div class="edit-modal-header"><h3 id="editModalTitle"><i class="fas fa-pen"></i> Uredi karticu</h3><button type="button" class="icon-btn" onclick="closeEditModal()" aria-label="Zatvori"><i class="fas fa-xmark"></i></button></div>
+            <input type="hidden" id="editLinkId">
+            <label>Naziv<input type="text" id="editName"></label>
+            <label>Opis<input type="text" id="editDesc"></label>
+            <label>Adresa<input type="text" id="editUrl"></label>
+            <label>Kategorija<select id="editColSelect"></select></label>
+            <label>Boja<select id="editColor"><option value="var(--c-blue)">Plava</option><option value="var(--c-green)">Zelena</option><option value="var(--c-orange)">Narančasta</option><option value="var(--c-red)">Crvena</option><option value="var(--c-purple)">Ljubičasta</option></select></label>
+            <div class="edit-modal-actions"><button type="button" class="secondary-btn" onclick="closeEditModal()">Odustani</button><button type="button" class="primary-btn" onclick="saveEditedLink()"><i class="fas fa-floppy-disk"></i> Spremi</button></div>
+        </div>
+    </div>
+
+	<footer class="dashboard-footer">
+    <div class="footer-content">
+        <div class="footer-left">
+            <span>Dashboard v7.3</span>
+            <span class="footer-separator">•</span>
+            <span>© 2026 </span>
+        <a href="mailto:emanuel.sabolovic@gmail.com" class="footer-link" title="Pošalji email">
+            Emanuel Sabolović
+        </a>
+			<span class="footer-separator">•</span>
+        </div>
+        <div class="footer-right">
+            <span>Made with <i class="fas fa-heart" style="color: #ef4444;"></i> for productivity</span>
+        </div>
+    </div>
+	</footer>
+	
+	<script>
+	
+	
+//===============================================================================================================================================================================================================================//
+
+
+	/* JAVASCRIPT POČINJE OVDJE (linija 388) */
+      /* JAVASCRIPT POČINJE OVDJE */
+const initialLinks = [
+    { id: 1, name: "Monitor.hr", url: "https://www.monitor.hr", desc: "Pregled vijesti", colId: "col_1", color: "var(--c-blue)" },
+    { id: 2, name: "Index.hr", url: "https://www.index.hr", desc: "Najčitaniji portal", colId: "col_1", color: "var(--c-blue)" },
+    { id: 3, name: "24sata", url: "https://www.24sata.hr", desc: "Vijesti i sport", colId: "col_1", color: "var(--c-blue)" },
+    { id: 4, name: "N1 HR", url: "https://hr.n1info.com", desc: "Informativni kanal", colId: "col_1", color: "var(--c-blue)" },
+    { id: 5, name: "Novi list", url: "https://www.novilist.hr", desc: "Rijeka i regija", colId: "col_1", color: "var(--c-blue)" },
+    { id: 6, name: "Glas Slavonije", url: "https://www.glas-slavonije.hr", desc: "Osijek", colId: "col_1", color: "var(--c-blue)" },
+    { id: 7, name: "Slobodna Dalmacija", url: "https://www.slobodnadalmacija.hr", desc: "Split", colId: "col_1", color: "var(--c-blue)" },
+    { id: 8, name: "Poslovni Dnevnik", url: "https://www.poslovni.hr", desc: "Biznis", colId: "col_1", color: "var(--c-blue)" },
+    { id: 9, name: "HRT Vijesti", url: "https://vijesti.hrt.hr", desc: "Javni servis", colId: "col_1", color: "var(--c-blue)" },
+    { id: 10, name: "Direktno.hr", url: "https://direktno.hr", desc: "Online vijesti", colId: "col_1", color: "var(--c-blue)" },
+    { id: 11, name: "Bjelovar Info", url: "https://bjelovar.info/", desc: "Lokalne vijesti", colId: "col_1", color: "var(--c-blue)" },
+    { id: 12, name: "Bjelovar Live", url: "https://bjelovar.live/", desc: "Gradski portal", colId: "col_1", color: "var(--c-blue)" },
+    { id: 13, name: "Klikni.hr", url: "https://www.klikni.hr/", desc: "Regija Bjelovar", colId: "col_1", color: "var(--c-blue)" },
+    { id: 14, name: "Moj portal", url: "https://www.mojportal.hr", desc: "Lokalne priče", colId: "col_1", color: "var(--c-blue)" },
+    { id: 15, name: "Brutalist Report", url: "https://brutalist.report/", desc: "Aggregator", colId: "col_1", color: "var(--c-purple)" },
+    { id: 16, name: "AllTopLinks", url: "https://alltoplinks.com/", desc: "Top linkovi", colId: "col_1", color: "var(--c-purple)" },
+    { id: 17, name: "WeAreChange", url: "https://wearechange.org/", desc: "Nezavisni", colId: "col_1", color: "var(--c-red)" },
+    { id: 18, name: "Bug.hr", url: "https://www.bug.hr", desc: "IT i gadgeti", colId: "col_2", color: "var(--c-green)" },
+    { id: 19, name: "Mreža", url: "https://mreza.hr", desc: "Poslovni IT", colId: "col_2", color: "var(--c-green)" },
+    { id: 20, name: "Netokracija", url: "https://www.netokracija.com", desc: "Startup", colId: "col_2", color: "var(--c-green)" },
+    { id: 21, name: "The Verge", url: "https://www.theverge.com", desc: "Tech i kultura", colId: "col_2", color: "var(--c-green)" },
+    { id: 22, name: "Wired", url: "https://www.wired.com", desc: "Znanost", colId: "col_2", color: "var(--c-green)" },
+    { id: 23, name: "Engadget", url: "https://www.engadget.com", desc: "Recenzije", colId: "col_2", color: "var(--c-green)" },
+    { id: 24, name: "Gizmodo", url: "https://gizmodo.com", desc: "Vodiči", colId: "col_2", color: "var(--c-green)" },
+    { id: 25, name: "Digital Trends", url: "https://www.digitaltrends.com", desc: "Tech news", colId: "col_2", color: "var(--c-green)" },
+    { id: 26, name: "CNET", url: "https://www.cnet.com", desc: "Gadgeti", colId: "col_2", color: "var(--c-green)" },
+    { id: 27, name: "Network World", url: "https://www.networkworld.com/", desc: "Networking", colId: "col_2", color: "var(--c-green)" },
+    { id: 28, name: "Renewable Energy", url: "https://www.renewableenergyworld.com", desc: "OIE mreže", colId: "col_5", color: "var(--c-orange)" },
+    { id: 29, name: "PV Magazine", url: "https://www.pv-magazine.com", desc: "Solari", colId: "col_5", color: "var(--c-orange)" },
+    { id: 30, name: "Smart Energy", url: "https://www.smart-energy.com", desc: "Grid news", colId: "col_5", color: "var(--c-orange)" },
+    { id: 31, name: "IEEE Spectrum", url: "https://spectrum.ieee.org/energy", desc: "Znanost", colId: "col_5", color: "var(--c-orange)" },
+    { id: 32, name: "Clean Energy Wire", url: "https://www.cleanenergywire.org", desc: "Analize", colId: "col_5", color: "var(--c-orange)" },
+    { id: 33, name: "Energy Post", url: "https://energypost.eu", desc: "EU Politika", colId: "col_5", color: "var(--c-orange)" },
+    { id: 34, name: "Greentech Media", url: "https://www.greentechmedia.com", desc: "Tržište", colId: "col_5", color: "var(--c-orange)" },
+    { id: 35, name: "Energia Naturalis", url: "https://www.energia-naturalis.com", desc: "Tranzicija", colId: "col_5", color: "var(--c-orange)" },
+    { id: 36, name: "Energetika.NET", url: "https://www.energetika.net", desc: "HR tržište", colId: "col_5", color: "var(--c-orange)" },
+    { id: 37, name: "OEiE", url: "https://oie.hr", desc: "Udruga HR", colId: "col_5", color: "var(--c-orange)" },
+    { id: 38, name: "Taste.io", url: "https://www.taste.io/", desc: "Filmovi", colId: "col_4", color: "var(--c-purple)" },
+    { id: 39, name: "IMDb", url: "https://www.imdb.com/", desc: "Baza filmova", colId: "col_4", color: "var(--c-purple)" },
+    { id: 40, name: "Men's Journal", url: "https://www.mensjournal.com/", desc: "Lifestyle", colId: "col_4", color: "var(--c-purple)" },
+    { id: 41, name: "Gmail", url: "https://mail.google.com", desc: "E-pošta", colId: "col_3", color: "var(--c-red)" },
+    { id: 42, name: "Google Keep", url: "https://keep.google.com", desc: "Bilješke", colId: "col_3", color: "var(--c-orange)" },
+    { id: 43, name: "Google Tasks", url: "https://tasks.google.com", desc: "Zadaci", colId: "col_3", color: "var(--c-blue)" },
+    { id: 45, name: "Google Gemini", url: "https://gemini.google.com", desc: "AI Assistant", colId: "col_3", color: "var(--c-purple)" },
+    { id: 46, name: "ChatGPT", url: "https://chatgpt.com", desc: "OpenAI", colId: "col_3", color: "var(--c-green)" },
+    { id: 47, name: "DeepSeek", url: "https://www.deepseek.com", desc: "AI model", colId: "col_3", color: "var(--c-blue)" },
+    { id: 48, name: "Live 2.0", url: "https://szg01ccappods01.data.centar/live20/#", desc: "", colId: "col_6", color: "var(--c-blue)" },
+    { id: 49, name: "eDozvola", url: "https://edozvola.gov.hr:9444/conferences", desc: "", colId: "col_6", color: "var(--c-blue)" },
+    { id: 50, name: "DeGis", url: "https://szg01gisweb08.data.centar/login", desc: "WEB GIS", colId: "col_6", color: "var(--c-blue)" },
+    { id: 51, name: "Katastar", url: "https://oss.uredjenazemlja.hr/map", desc: "", colId: "col_6", color: "var(--c-blue)" },
+    { id: 52, name: "Google maps", url: "https://www.google.com/maps", desc: "", colId: "col_6", color: "var(--c-blue)" },
+    { id: 53, name: "HEP BJ portal", url: "http://bjportal/ords/r/bjelovar_ws/bjportal25", desc: "", colId: "col_6", color: "var(--c-blue)" },
+    { id: 54, name: "Mjerinfo", url: "http://10.129.64.149:1000/dp/", desc: "Mjerni sustav za praćenje naponskih prilika", colId: "col_6", color: "var(--c-blue)" },
+    { id: 55, name: "info HEP", url: "https://infohep/Stranice/default.aspx", desc: "", colId: "col_6", color: "var(--c-blue)" },
+    { id: 56, name: "Pinterest", url: "https://www.pinterest.com", desc: "", colId: "col_4", color: "var(--purple)" },
+];
+
+const defaultState = {
+    columns: [
+        { id: "col_6", title: "Posao", icon: "fa-solid fa-folder" },
+        { id: "col_1", title: "Novinski portali", icon: "fa-solid fa-newspaper" },
+        { id: "col_2", title: "Tehnologija", icon: "fa-solid fa-microchip" },
+        { id: "col_3", title: "Alati i AI", icon: "fa-solid fa-icons" },
+        { id: "col_4", title: "Zabava i ostalo", icon: "fa-solid fa-icons" },
+        { id: "col_5", title: "Energetika", icon: "fa-solid fa-bolt-lightning" }
+    ],
+    links: initialLinks
+};
+
+const STORAGE_KEY = 'dashState_v6';
+const LEGACY_STORAGE_KEYS = ['dashState_v4.1'];
+
+function loadState() {
+    for (const key of [STORAGE_KEY, ...LEGACY_STORAGE_KEYS]) {
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) continue;
+            const parsed = JSON.parse(raw);
+            if (parsed && Array.isArray(parsed.columns) && Array.isArray(parsed.links)) {
+                if (key !== STORAGE_KEY) localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+                return parsed;
+            }
+        } catch (err) {
+            console.warn('Ne mogu učitati spremljeno stanje:', err);
+        }
+    }
+    return structuredClone ? structuredClone(defaultState) : JSON.parse(JSON.stringify(defaultState));
+}
+
+let state = loadState();
+let isDraggingCard = false;
+let ctrlPressed = false;
+
+const FAVORITES_KEY = 'dashboardFavorites_v7';
+const COLLAPSED_KEY = 'dashboardCollapsed_v7';
+let favorites = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+let recentLinks = [];
+let collapsedColumns = JSON.parse(localStorage.getItem(COLLAPSED_KEY) || '[]');
+let editMode = false;
+let searchQuery = '';
+
+// ========== NOTIFIKACIJE ==========
+function showNotification(message, type = "info") {
+    const existing = document.querySelector('.save-notification');
+    if (existing) existing.remove();
+    
+    const notification = document.createElement('div');
+    notification.className = `save-notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? 'var(--c-green)' : 'var(--c-red)'};
+        color: white;
+        padding: 10px 15px;
+        border-radius: 6px;
+        z-index: 9999;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        animation: slideIn 0.3s ease;
+        font-size: 0.9rem;
+        font-weight: 500;
+    `;
+    
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
+}
+
+function showShortcutNotification(message) {
+    const notification = document.createElement('div');
+    notification.textContent = '⌨️ ' + message;
+    notification.style.cssText = `
+        position: fixed;
+        bottom: 100px;
+        right: 25px;
+        background: var(--primary-blue);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 8px;
+        z-index: 9999;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        animation: slideIn 0.3s ease;
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 1500);
+}
+
+function showThemeNotification(theme) {
+    const notification = document.createElement('div');
+    notification.className = 'theme-notification';
+    notification.textContent = theme === 'dark' ? '🌙 Tamna tema aktivirana' : '☀️ Svijetla tema aktivirana';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${theme === 'dark' ? '#1e293b' : '#1e3a8a'};
+        color: white;
+        padding: 12px 18px;
+        border-radius: 8px;
+        z-index: 9999;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        animation: fadeInOut 2s ease forwards;
+        font-weight: 600;
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 2000);
+}
+
+// ========== TEMA ==========
+function initTheme() {
+    const savedTheme = localStorage.getItem('dashboardTheme') || 'light';
+    document.body.setAttribute('data-theme', savedTheme);
+    
+    const themeIcon = document.querySelector('.theme-toggle i');
+    if (savedTheme === 'dark') {
+        themeIcon.classList.remove('fa-circle-half-stroke');
+        themeIcon.classList.add('fa-sun');
+        themeIcon.parentElement.title = "Prebaci na svijetlu temu";
+    } else {
+        themeIcon.classList.remove('fa-circle-half-stroke');
+        themeIcon.classList.add('fa-moon');
+        themeIcon.parentElement.title = "Prebaci na tamnu temu";
+    }
+}
+
+function toggleTheme() {
+    const currentTheme = document.body.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    
+    document.body.setAttribute('data-theme', newTheme);
+    
+    const themeIcon = document.querySelector('.theme-toggle i');
+    themeIcon.style.transform = 'rotate(180deg)';
+    setTimeout(() => {
+        themeIcon.style.transform = 'rotate(0deg)';
+        themeIcon.classList.remove('fa-sun', 'fa-moon', 'fa-circle-half-stroke');
+        
+        if (newTheme === 'dark') {
+            themeIcon.classList.add('fa-sun');
+            themeIcon.parentElement.title = "Prebaci na svijetlu temu";
+        } else {
+            themeIcon.classList.add('fa-moon');
+            themeIcon.parentElement.title = "Prebaci na tamnu temu";
+        }
+    }, 150);
+    
+    localStorage.setItem('dashboardTheme', newTheme);
+    showThemeNotification(newTheme);
+}
+
+// ========== VRIJEME ==========
+function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').innerText = now.toLocaleTimeString('hr-HR', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    document.getElementById('date').innerText = now.toLocaleDateString('hr-HR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+    });
+}
+
+// ========== WEATHER ==========
+function getWeatherDescription(code) {
+    const weatherCodes = {
+        0: "Sunčano", 1: "Pretežno sunčano", 2: "Djelomično oblačno", 3: "Oblačno",
+        45: "Maglovito", 48: "Maglovito", 51: "Slaba kiša", 53: "Umjerena kiša",
+        55: "Jaka kiša", 61: "Slaba kiša", 63: "Umjerena kiša", 65: "Jaka kiša",
+        71: "Slab snijeg", 73: "Umjeren snijeg", 75: "Jak snijeg", 80: "Pljusak",
+        81: "Umjeren pljusak", 82: "Jak pljusak", 95: "Grmljavina", 96: "Grmljavina s tučom", 99: "Grmljavina s tučom"
+    };
+    return weatherCodes[code] || "Nepoznato";
+}
+
+function getWeatherIcon(code) {
+    if (code === 0 || code === 1) return 'fa-sun';
+    if (code === 2) return 'fa-cloud-sun';
+    if (code === 3) return 'fa-cloud';
+    if (code === 45 || code === 48) return 'fa-smog';
+    if ((code >= 51 && code <= 55) || (code >= 61 && code <= 65) || (code >= 80 && code <= 82)) return 'fa-cloud-rain';
+    if (code >= 71 && code <= 75) return 'fa-snowflake';
+    if (code >= 95) return 'fa-bolt';
+    return 'fa-cloud';
+}
+
+function updateWeatherUI(data) {
+    const weatherPanel = document.getElementById('weatherPanel');
+    const weatherDetails = document.getElementById('weatherDetails');
+    
+    if (weatherPanel) {
+        weatherPanel.innerHTML = `
+            <i class="fas ${data.weatherIcon}" style="color: var(--c-orange);"></i>
+            <span style="font-weight: bold;">${data.temp}°C</span>
+            <span style="font-size: 0.7rem; opacity: 0.8;">${data.weatherDesc}</span>
+            <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; opacity: 0.7;"></i>
+        `;
+    }
+    
+    if (weatherDetails) {
+        weatherDetails.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; min-width: 200px;">
+                <div style="text-align: center;"><i class="fas fa-tint"></i><div>${data.humidity}%</div><small>Vlažnost</small></div>
+                <div style="text-align: center;"><i class="fas fa-wind"></i><div>${data.wind} km/h</div><small>Vjetar</small></div>
+                <div style="text-align: center;"><i class="fas fa-arrow-up"></i><div>${data.todayMax}°</div><small>Max danas</small></div>
+                <div style="text-align: center;"><i class="fas fa-arrow-down"></i><div>${data.todayMin}°</div><small>Min danas</small></div>
+                <div style="text-align: center;"><i class="fas fa-umbrella"></i><div>${data.todayPrecip}%</div><small>Kiša danas</small></div>
+                <div style="text-align: center;"><i class="fas fa-calendar-day"></i><div>${data.tomorrowMax}°/${data.tomorrowMin}°</div><small>Sutra</small></div>
+            </div>
+        `;
+    }
+}
+
+async function fetchWeather() {
+    try {
+        const lat = 45.8988;
+        const lon = 16.8423;
+        const res = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max&hourly=relativehumidity_2m,windspeed_10m&timezone=Europe/Zagreb`
+        );
+        const data = await res.json();
+        
+        const currentTemp = Math.round(data.current_weather.temperature);
+        const currentWind = Math.round(data.current_weather.windspeed);
+        const currentWeatherCode = data.current_weather.weathercode;
+        const currentHour = new Date().getHours();
+        const currentHumidity = data.hourly.relativehumidity_2m[currentHour];
+        const today = data.daily;
+        
+        const weatherData = {
+            temp: currentTemp,
+            humidity: currentHumidity,
+            wind: currentWind,
+            weatherDesc: getWeatherDescription(currentWeatherCode),
+            weatherIcon: getWeatherIcon(currentWeatherCode),
+            todayMax: Math.round(today.temperature_2m_max[0]),
+            todayMin: Math.round(today.temperature_2m_min[0]),
+            todayPrecip: today.precipitation_probability_max[0],
+            tomorrowMax: Math.round(today.temperature_2m_max[1]),
+            tomorrowMin: Math.round(today.temperature_2m_min[1]),
+            tomorrowPrecip: today.precipitation_probability_max[1],
+            timestamp: Date.now()
+        };
+        
+        localStorage.setItem('weatherData', JSON.stringify(weatherData));
+        updateWeatherUI(weatherData);
+    } catch (e) {
+        console.error('Weather fetch error:', e);
+        const cached = localStorage.getItem('weatherData');
+        if (cached) {
+            const weatherData = JSON.parse(cached);
+            if (Date.now() - weatherData.timestamp < 3600000) {
+                updateWeatherUI(weatherData);
+                return;
+            }
+        }
+        const weatherPanel = document.getElementById('weatherPanel');
+        if (weatherPanel) weatherPanel.innerHTML = '<i class="fa-solid fa-cloud"></i> <span>N/A</span>';
+    }
+}
+
+// ========== WEATHER TOGGLE ==========
+function initWeatherToggle() {
+    const checkInterval = setInterval(function() {
+        const weatherPanel = document.getElementById('weatherPanel');
+        const weatherDetails = document.getElementById('weatherDetails');
+        
+        if (weatherPanel && weatherDetails) {
+            clearInterval(checkInterval);
+            console.log('Weather elementi pronađeni, inicijaliziram...');
+            
+            const newWeatherPanel = weatherPanel.cloneNode(true);
+            weatherPanel.parentNode.replaceChild(newWeatherPanel, weatherPanel);
+            const finalWeatherPanel = document.getElementById('weatherPanel');
+            const finalWeatherDetails = document.getElementById('weatherDetails');
+            
+            finalWeatherPanel.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                finalWeatherDetails.classList.toggle('show');
+                if (finalWeatherDetails.classList.contains('show')) {
+                    setTimeout(() => finalWeatherDetails.classList.remove('show'), 5000);
+                }
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!finalWeatherPanel.contains(e.target) && !finalWeatherDetails.contains(e.target)) {
+                    finalWeatherDetails.classList.remove('show');
+                }
+            });
+            
+            finalWeatherDetails.addEventListener('click', (e) => e.stopPropagation());
+            console.log('Weather toggle uspješno inicijaliziran!');
+        }
+    }, 100);
+    
+    setTimeout(() => {
+        clearInterval(checkInterval);
+        console.log('Timeout: Weather elementi nisu pronađeni');
+    }, 10000);
+}
+
+// ========== CTRL ZA POVLAČENJE ==========
+
+function updateAllCursors() {
+    const cardWrappers = document.querySelectorAll('.card-wrapper');
+    const columns = document.querySelectorAll('.column');
+    const colHeaders = document.querySelectorAll('.col-header');
+    const ctrlIndicator = document.getElementById('ctrlIndicator');
+    
+    if (ctrlPressed) {
+        cardWrappers.forEach(card => card.style.cursor = 'grab');
+        columns.forEach(col => col.style.cursor = 'grab');
+        colHeaders.forEach(header => header.style.cursor = 'grab');
+        if (ctrlIndicator) ctrlIndicator.classList.add('show');
+    } else {
+        cardWrappers.forEach(card => card.style.cursor = 'pointer');
+        columns.forEach(col => col.style.cursor = 'default');
+        colHeaders.forEach(header => header.style.cursor = 'default');
+        if (ctrlIndicator) ctrlIndicator.classList.remove('show');
+    }
+}
+
+function initCtrlListener() {
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Control' || e.key === 'Meta') {
+            ctrlPressed = true;
+            document.body.classList.add('ctrl-active');
+            updateAllCursors();
+        }
+    });
+    
+    document.addEventListener('keyup', (e) => {
+        if (e.key === 'Control' || e.key === 'Meta') {
+            ctrlPressed = false;
+            document.body.classList.remove('ctrl-active');
+            updateAllCursors();
+            if (isDraggingCard) {
+                const draggingCard = document.querySelector('.dragging');
+                if (draggingCard) {
+                    draggingCard.classList.remove('dragging');
+                    isDraggingCard = false;
+                }
+            }
+        }
+    });
+    
+    ['blur', 'visibilitychange'].forEach(event => {
+        document.addEventListener(event, () => {
+            if (ctrlPressed) {
+                ctrlPressed = false;
+                document.body.classList.remove('ctrl-active');
+                updateAllCursors();
+            }
+        });
+    });
+}
+
+function disableAllDrag() {
+    document.querySelectorAll('.card-wrapper, .column').forEach(el => el.draggable = false);
+}
+
+// ========== KOLONE I KARTICE ==========
+
+
+function saveCurrentState() { 
+    const newCols = []; 
+    const newLinks = []; 
+    
+    document.querySelectorAll('.column').forEach((colDiv, index) => { 
+        const originalCol = state.columns.find(c => c.id === colDiv.id); 
+        newCols.push({ 
+            id: colDiv.id, 
+            title: colDiv.querySelector('.col-title').value, 
+            icon: originalCol ? originalCol.icon : 'fa-solid fa-folder' 
+        }); 
+        
+        colDiv.querySelectorAll('.card-wrapper').forEach(card => { 
+            const original = state.links.find(l => l.id == card.dataset.id); 
+            if (original) {
+                newLinks.push({ 
+                    ...original, 
+                    colId: colDiv.id 
+                });
+            }
+        }); 
+    }); 
+    
+    state.columns = newCols; 
+    state.links = newLinks; 
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
+}
+
+function updateColTitle(id, val) {
+    if (!val || val.trim().length === 0) {
+        showNotification("Ime ne može biti prazno!", "error");
+        return;
+    }
+    if (val.length > 50) {
+        showNotification("Ime je predugo (max 50 znakova)", "error");
+        return;
+    }
+    
+    const c = state.columns.find(x => x.id === id);
+    if (c) {
+        c.title = val;
+        saveCurrentState();
+        showNotification("Ime kategorije spremljeno!", "success");
+    }
+}
+
+function addNewColumn() {
+    const t = prompt("Ime nove kategorije:");
+    if (t) {
+        state.columns.push({ id: 'col_' + Date.now(), title: t, icon: 'fa-solid fa-folder' });
+        saveAndRender();
+    }
+}
+
+function deleteColumn(id) {
+    if (confirm("Obrisati cijelu kategoriju?")) {
+        state.columns = state.columns.filter(c => c.id !== id);
+        state.links = state.links.filter(l => l.colId !== id);
+        saveAndRender();
+    }
+}
+
+function deleteLink(id) {
+    state.links = state.links.filter(l => l.id !== id);
+    saveAndRender();
+}
+
+function normalizeUrl(url) {
+    const value = (url || '').trim();
+    if (!value) return '';
+    if (/^(https?:\/\/|file:\/\/)/i.test(value)) return value;
+    return 'https://' + value;
+}
+
+function isSafeUrl(url) {
+    try {
+        const parsed = new URL(url);
+        return ['http:', 'https:', 'file:'].includes(parsed.protocol);
+    } catch (_) {
+        return false;
+    }
+}
+
+function addNewLink() {
+    const n = document.getElementById('newName').value.trim();
+    const u = normalizeUrl(document.getElementById('newUrl').value);
+    const d = document.getElementById('newDesc').value.trim();
+    const c = document.getElementById('newColSelect').value;
+
+    if (!n || !u) {
+        showNotification('Unesi ime i adresu linka.', 'error');
+        return;
+    }
+    if (!isSafeUrl(u)) {
+        showNotification('Adresa linka nije valjana.', 'error');
+        return;
+    }
+    {
+        state.links.unshift({
+            id: Date.now(),
+            name: n,
+            desc: d,
+            url: u,
+            colId: c,
+            color: "var(--c-blue)"
+        });
+        saveAndRender();
+        toggleSettings();
+        document.getElementById('newName').value = '';
+        document.getElementById('newUrl').value = '';
+        document.getElementById('newDesc').value = '';
+        showNotification('Link dodan.', 'success');
+    }
+}
+
+function updateLinkSelect() {
+    const select = document.getElementById('newColSelect');
+    if (select) {
+        select.innerHTML = state.columns.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
+    }
+}
+
+function handleCardDragOver(e, colId) {
+    e.preventDefault();
+    if (!isDraggingCard) return;
+    
+    const container = document.querySelector(`#${colId} .list-container`);
+    const draggingCard = document.querySelector('.dragging');
+    if (!container || !draggingCard) return;
+    
+    const elements = [...container.querySelectorAll('.card-wrapper:not(.dragging)')];
+    const afterElement = elements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = e.clientY - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+        return closest;
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+    
+    if (afterElement) container.insertBefore(draggingCard, afterElement);
+    else container.appendChild(draggingCard);
+}
+
+function handleColDragOver(e) { 
+    e.preventDefault(); 
+    if (isDraggingCard) return; 
+    
+    const draggingCol = document.querySelector('.dragging-col'); 
+    if (!draggingCol) return;
+    
+    const wrapper = document.getElementById('mainWrapper'); 
+    const columns = [...wrapper.querySelectorAll('.column:not(.dragging-col)')]; 
+    
+    const afterElement = columns.reduce((closest, child) => { 
+        const box = child.getBoundingClientRect(); 
+        const offset = e.clientX - box.left - box.width / 2; 
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child }; 
+        }
+        return closest; 
+    }, { offset: Number.NEGATIVE_INFINITY }).element; 
+    
+    if (afterElement) {
+        wrapper.insertBefore(draggingCol, afterElement); 
+    } else {
+        wrapper.appendChild(draggingCol); 
+    }
+}
+
+// ========== RENDER ==========
+function renderAll() {
+    const wrapper = document.getElementById('mainWrapper');
+    wrapper.innerHTML = '';
+    const q = searchQuery.trim().toLocaleLowerCase('hr');
+    let visibleCount = 0;
+
+    state.columns.forEach((col) => {
+        const columnLinksAll = state.links.filter(l => l.colId === col.id);
+        const columnLinks = q ? columnLinksAll.filter(link => `${link.name} ${link.desc || ''} ${link.url || ''} ${col.title}`.toLocaleLowerCase('hr').includes(q)) : columnLinksAll;
+        if (q && columnLinks.length === 0 && !col.title.toLocaleLowerCase('hr').includes(q)) return;
+        visibleCount += columnLinks.length;
+
+        const colDiv = document.createElement('div');
+        colDiv.className = 'column' + (collapsedColumns.includes(col.id) && !q ? ' collapsed' : '');
+        colDiv.id = col.id;
+        colDiv.setAttribute('draggable', editMode ? 'true' : 'false');
+        colDiv.innerHTML = `
+            <div class="col-header">
+                <i class="${col.icon || 'fa-solid fa-folder'}"></i>
+                <input class="col-title" value="${escapeHtml(col.title)}" onchange="updateColTitle('${col.id}', this.value)">
+                <button class="collapse-btn" type="button" onclick="event.stopPropagation(); toggleColumnCollapse('${col.id}')" title="Sklopi/otvori kategoriju"><i class="fas fa-chevron-down"></i></button>
+                ${editMode ? `<button style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:0.7rem;" onclick="deleteColumn('${col.id}')" title="Izbriši kategoriju"><i class="fas fa-trash"></i></button>` : ''}
+            </div>
+            <div class="list-container" ondragover="handleCardDragOver(event, '${col.id}')"></div>`;
+
+        colDiv.addEventListener('dragstart', (e) => {
+            if (!editMode || !ctrlPressed) { e.preventDefault(); return false; }
+            e.dataTransfer.setData('text/plain', col.id); e.dataTransfer.effectAllowed = 'move'; colDiv.classList.add('dragging-col'); return true;
+        });
+        colDiv.addEventListener('dragend', () => { colDiv.classList.remove('dragging-col'); saveCurrentState(); });
+
+        const container = colDiv.querySelector('.list-container');
+        columnLinks.forEach(link => {
+            const cardWrap = document.createElement('div');
+            cardWrap.className = 'card-wrapper';
+            cardWrap.setAttribute('draggable', editMode ? 'true' : 'false');
+            cardWrap.dataset.id = link.id;
+            let host = ''; try { host = new URL(normalizeUrl(link.url)).hostname; } catch (_) {}
+            const favUrl = host ? `https://icons.duckduckgo.com/ip3/${encodeURIComponent(host)}.ico` : '';
+            const isFav = favorites.includes(link.id);
+            cardWrap.innerHTML = `
+                <div class="card-actions">
+                    <button class="${isFav ? 'favorite-active' : ''}" onclick="event.stopPropagation(); toggleFavorite(${link.id})" title="${isFav ? 'Ukloni iz favorita' : 'Dodaj u favorite'}"><i class="${isFav ? 'fas' : 'far'} fa-star"></i></button>
+                    <button onclick="event.stopPropagation(); openEditModal(${link.id})" title="Uredi"><i class="fas fa-pen"></i></button>
+                    <button class="danger-mini" onclick="event.stopPropagation(); deleteLink(${link.id})" title="Izbriši"><i class="fas fa-trash"></i></button>
+                </div>
+                <div class="card" style="--card-color: ${link.color || 'var(--c-blue)'}">
+                    <h3>${favUrl ? `<img src="${favUrl}" class="favicon" alt="" loading="lazy" onerror="this.style.display='none'">` : ''} ${escapeHtml(link.name)}</h3>
+                    <p>${escapeHtml(link.desc || '')}</p>
+                    <div class="url">${escapeHtml(host || link.url)}</div>
+                </div>`;
+            cardWrap.onclick = (e) => { if (!editMode && !ctrlPressed) openDashboardLink(link.id); };
+            cardWrap.addEventListener('contextmenu', (e) => { if (editMode) { e.preventDefault(); openEditModal(link.id); } });
+            cardWrap.addEventListener('dragstart', (e) => {
+                if (!editMode || !ctrlPressed) { e.preventDefault(); return false; }
+                e.dataTransfer.setData('text/plain', link.id); e.dataTransfer.effectAllowed = 'move'; cardWrap.classList.add('dragging'); isDraggingCard = true; return true;
+            });
+            cardWrap.addEventListener('dragend', () => { cardWrap.classList.remove('dragging'); isDraggingCard = false; saveCurrentState(); });
+            container.appendChild(cardWrap);
+        });
+        wrapper.appendChild(colDiv);
+    });
+
+    if (editMode && !q) {
+        const addBtn = document.createElement('div'); addBtn.className = 'add-col-trigger'; addBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Nova kategorija'; addBtn.onclick = addNewColumn; wrapper.appendChild(addBtn);
+    }
+    const countEl = document.getElementById('searchResultCount');
+    if (countEl) countEl.textContent = q ? `${visibleCount} / ${state.links.length}` : `${state.links.length}`;
+    updateLinkSelect(); renderQuickSections(); updateEditModeButton();
+}
+
+function openDashboardLink(id) {
+    const link = state.links.find(l => l.id === id); if (!link) return;
+    recentLinks = [id, ...recentLinks.filter(x => x !== id)].slice(0, 8);
+    renderQuickSections();
+    window.open(normalizeUrl(link.url), '_blank', 'noopener,noreferrer');
+}
+
+function renderQuickSections() {
+    renderQuickList('favoritesList', favorites.filter(id => state.links.some(l => l.id === id)), 'favoritesSection');
+    renderQuickList('recentList', recentLinks.filter(id => state.links.some(l => l.id === id)), 'recentSection');
+    const fc = document.getElementById('favoritesCount'); if (fc) fc.textContent = favorites.length ? `${favorites.length}` : '';
+}
+function renderQuickList(listId, ids, sectionId) {
+    const list = document.getElementById(listId), section = document.getElementById(sectionId); if (!list || !section) return;
+    section.classList.toggle('is-empty', ids.length === 0); list.innerHTML = '';
+    ids.forEach(id => { const link = state.links.find(l => l.id === id); if (!link) return; let host=''; try{host=new URL(normalizeUrl(link.url)).hostname}catch(_){}; const fav=host?`https://icons.duckduckgo.com/ip3/${encodeURIComponent(host)}.ico`:''; const el=document.createElement('div'); el.className='quick-card'; el.onclick=()=>openDashboardLink(id); el.innerHTML=`${fav?`<img src="${fav}" alt="" onerror="this.style.display='none'">`:''}<div class="quick-card-text"><div class="quick-card-name">${escapeHtml(link.name)}</div><div class="quick-card-desc">${escapeHtml(link.desc || host)}</div></div>`; list.appendChild(el); });
+}
+function toggleFavorite(id) { favorites = favorites.includes(id) ? favorites.filter(x=>x!==id) : [id, ...favorites]; localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites)); renderAll(); }
+function clearRecent() { recentLinks = []; }
+function toggleColumnCollapse(id) { collapsedColumns = collapsedColumns.includes(id) ? collapsedColumns.filter(x=>x!==id) : [...collapsedColumns,id]; localStorage.setItem(COLLAPSED_KEY,JSON.stringify(collapsedColumns)); renderAll(); }
+function toggleEditMode() { editMode=!editMode; document.body.classList.toggle('edit-mode',editMode); renderAll(); showNotification(editMode?'Uređivanje otključano.':'Uređivanje zaključano.','success'); }
+function updateEditModeButton(){ const b=document.getElementById('editModeBtn'); if(!b)return; b.classList.toggle('active',editMode); b.innerHTML=editMode?'<i class="fas fa-lock-open"></i><span>Uređivanje uključeno</span>':'<i class="fas fa-lock"></i><span>Uređivanje zaključano</span>'; }
+function openEditModal(id){ if(!editMode)return; const link=state.links.find(l=>l.id===id); if(!link)return; document.getElementById('editLinkId').value=id; document.getElementById('editName').value=link.name||''; document.getElementById('editDesc').value=link.desc||''; document.getElementById('editUrl').value=link.url||''; const sel=document.getElementById('editColSelect'); sel.innerHTML=state.columns.map(c=>`<option value="${c.id}">${escapeHtml(c.title)}</option>`).join(''); sel.value=link.colId; document.getElementById('editColor').value=link.color||'var(--c-blue)'; document.getElementById('editModalBackdrop').classList.add('show'); document.getElementById('editName').focus(); }
+function closeEditModal(){ document.getElementById('editModalBackdrop')?.classList.remove('show'); }
+function saveEditedLink(){ const id=Number(document.getElementById('editLinkId').value); const link=state.links.find(l=>l.id===id); if(!link)return; const name=document.getElementById('editName').value.trim(); const url=normalizeUrl(document.getElementById('editUrl').value); if(!name||!isSafeUrl(url)){showNotification('Unesi valjan naziv i adresu.','error');return;} link.name=name; link.desc=document.getElementById('editDesc').value.trim(); link.url=url; link.colId=document.getElementById('editColSelect').value; link.color=document.getElementById('editColor').value; closeEditModal(); saveAndRender(); showNotification('Kartica spremljena.','success'); }
+
+// Helper funkcija za XSS zaštitu
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function saveAndRender() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    renderAll();
+}
+
+// ========== POSTAVKE ==========
+function toggleSettings() {
+    document.getElementById('settingsCard').classList.toggle('active');
+}
+
+function exportSettings() {
+    const data = JSON.stringify(state, null, 4);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "dashboard_backup_" + new Date().toISOString().split('T')[0] + ".json";
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function importSettings(event) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const importedState = JSON.parse(e.target.result);
+            if (importedState.columns && importedState.links) {
+                state = importedState;
+                saveAndRender();
+                alert("Postavke uspješno uvežene!");
+            } else {
+                alert("Datoteka nije valjani backup dashboarda!");
+            }
+        } catch (error) {
+            alert("Greška pri čitanju datoteke: " + error.message);
+        }
+    };
+    const file = event.target.files && event.target.files[0];
+    if (file) reader.readAsText(file);
+    event.target.value = '';
+}
+
+function clearMemory() {
+    if (confirm("Vraćanje na tvorničke postavke će obrisati sve vaše promjene. Nastaviti?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        LEGACY_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
+        localStorage.removeItem('dashboardTheme');
+        localStorage.removeItem(FAVORITES_KEY);
+        localStorage.removeItem(COLLAPSED_KEY);
+        location.reload();
+    }
+}
+
+// ========== TIPKOVNICA ==========
+function duplicateSelectedCard() {
+    const cards = document.querySelectorAll('.card-wrapper');
+    if (cards.length > 0) {
+        const firstCard = cards[0];
+        const cardId = parseInt(firstCard.dataset.id);
+        const originalLink = state.links.find(l => l.id === cardId);
+        
+        if (originalLink) {
+            state.links.push({
+                ...originalLink,
+                id: Date.now(),
+                name: originalLink.name + ' (kopija)'
+            });
+            saveAndRender();
+            showShortcutNotification('Kartica duplicirana!');
+        }
+    }
+}
+
+function closeAllModals() {
+    document.getElementById('settingsCard').classList.remove('active');
+    closeEditModal();
+}
+
+function showKeyboardShortcutsHelp() {
+    const existingHelp = document.querySelector('.shortcuts-help');
+    if (existingHelp) {
+        existingHelp.remove();
+        return;
+    }
+    
+    const helpDiv = document.createElement('div');
+    helpDiv.className = 'shortcuts-help';
+    helpDiv.innerHTML = `
+        <div class="shortcuts-content">
+            <h3><i class="fas fa-keyboard"></i> Kratice na tipkovnici</h3>
+            <div class="shortcut-item"><span class="key">Ctrl + N</span><span class="desc">Nova kategorija</span></div>
+            <div class="shortcut-item"><span class="key">Ctrl + S</span><span class="desc">Postavke</span></div>
+            <div class="shortcut-item"><span class="key">Ctrl + F</span><span class="desc">Pretraga</span></div>
+            <div class="shortcut-item"><span class="key">Ctrl + H</span><span class="desc">Promijeni temu</span></div>
+            <div class="shortcut-item"><span class="key">Ctrl + E</span><span class="desc">Export postavki</span></div>
+            <div class="shortcut-item"><span class="key">Ctrl + I</span><span class="desc">Import postavki</span></div>
+            <div class="shortcut-item"><span class="key">Ctrl + /</span><span class="desc">Prikaži/sakrij pomoć</span></div>
+            <div class="shortcut-item"><span class="key">Esc</span><span class="desc">Zatvori prozore</span></div>
+            <button onclick="this.parentElement.parentElement.remove()" style="margin-top:10px; width:100%; padding:8px; background:var(--primary-blue); color:white; border:none; border-radius:4px; cursor:pointer;">Zatvori</button>
+        </div>
+    `;
+    document.body.appendChild(helpDiv);
+}
+
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'n') { e.preventDefault(); addNewColumn(); }
+        else if (e.ctrlKey && e.key === 's') { e.preventDefault(); toggleSettings(); }
+        else if (e.ctrlKey && e.key === 'd') { e.preventDefault(); duplicateSelectedCard(); }
+        else if (e.key === 'Escape') { closeAllModals(); }
+        else if (e.ctrlKey && e.key === 'f') { e.preventDefault(); document.querySelector('.search-box input').focus(); }
+        else if (e.ctrlKey && e.key === 'h') { e.preventDefault(); toggleTheme(); }
+        else if (e.ctrlKey && e.key === 'e') { e.preventDefault(); exportSettings(); }
+        else if (e.ctrlKey && e.key === 'i') { e.preventDefault(); document.getElementById('importInput').click(); }
+        else if (e.ctrlKey && e.key === '/') { e.preventDefault(); showKeyboardShortcutsHelp(); }
+    });
+}
+
+// Zatvori postavke klikom izvan panela
+ document.addEventListener('click', (e) => {
+    const panel = document.getElementById('settingsCard');
+    const trigger = document.querySelector('.admin-trigger');
+    if (panel?.classList.contains('active') && !panel.contains(e.target) && !trigger?.contains(e.target)) {
+        panel.classList.remove('active');
+    }
+});
+
+
+function initUniversalSearch(){
+    const input=document.getElementById('dashboardSearch'), clear=document.getElementById('clearSearchBtn'); if(!input)return;
+    const update=()=>{ searchQuery=input.value; if(clear) clear.style.display=searchQuery?'block':'none'; renderAll(); };
+    input.addEventListener('input', update);
+    input.addEventListener('keydown', e=>{ if(e.key==='Escape'){input.value='';update();input.blur();} else if(e.key==='Enter' && input.value.trim()){ const q=input.value.trim(); const matches=state.links.filter(l=>`${l.name} ${l.desc||''} ${l.url||''}`.toLocaleLowerCase('hr').includes(q.toLocaleLowerCase('hr'))); if(matches.length===1){e.preventDefault();openDashboardLink(matches[0].id);} else {e.preventDefault();window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank','noopener,noreferrer');}} });
+    clear?.addEventListener('click',()=>{input.value='';update();input.focus();});
+}
+
+// ========== INICIJALIZACIJA ==========
+setInterval(updateClock, 1000);
+setInterval(fetchWeather, 900000);
+initKeyboardShortcuts();
+initCtrlListener();
+initUniversalSearch();
+initTheme();
+updateClock();
+fetchWeather();
+renderAll();
+initWeatherToggle();
+
+//=============================================================================================================================================================================================================================//
+
+
+
+
+    </script>
+</body>
+</html>
